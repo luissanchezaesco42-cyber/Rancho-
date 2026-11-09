@@ -1,0 +1,5 @@
+const CACHE='rancho-ruisenor-v5';
+const CORE=['./','index.html','manifest.json','assets/logo-rancho.svg','assets/fonts/Fraunces.woff2'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(u)))).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==CACHE).map(n=>caches.delete(n)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request).then(r=>{if(r.ok){const k=r.clone();caches.open(CACHE).then(ch=>ch.put(e.request,k))}return r}).catch(()=>caches.match('index.html'))))});
