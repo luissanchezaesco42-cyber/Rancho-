@@ -1,5 +1,5 @@
-const CACHE='rancho-ruisenor-v9';
-const CORE=['./','index.html','manifest.json','assets/logo-rancho.svg','assets/placeholder.svg','assets/fonts/Fraunces.woff2'];
+const CACHE='rancho-ruisenor-v10';
+const CORE=['./','index.html','manifest.json','assets/logo-rancho.svg','assets/fonts/Fraunces.woff2'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(u)))).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==CACHE).map(n=>caches.delete(n)))).then(()=>self.clients.claim())));
 // Red primero (siempre la versión más nueva); si no hay conexión, usa la copia guardada.
