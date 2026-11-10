@@ -92,6 +92,7 @@ public class MainActivity extends Activity {
                 else if ("svg".equals(ext)) mime = "image/svg+xml";
                 else if ("woff2".equals(ext)) mime = "font/woff2";
                 else if ("css".equals(ext)) mime = "text/css";
+                else if ("mp3".equals(ext)) mime = "audio/mpeg";
                 else if ("png".equals(ext)) mime = "image/png";
                 else if ("jpg".equals(ext) || "jpeg".equals(ext)) mime = "image/jpeg";
                 Map<String, String> h = new HashMap<String, String>();
