@@ -132,7 +132,7 @@
     document.getElementById('confirmPdf').onclick=async()=>{const name=(document.getElementById('pdfName').value.trim()||'menu-rancho-ruisenor').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'-');menuData.pdfDate=document.getElementById('pdfDate').value.trim();dirty=true;renderMenu();const btn=document.getElementById('confirmPdf');modal.hidden=true;btn.disabled=true;btn.textContent='Generando…';
       try{const cats=menuData.categories.filter(c=>c.items.some(i=>i.available)).map(c=>({title:c.title,items:c.items.filter(i=>i.available)}));await document.fonts.load('700 40px Fraunces');await document.fonts.ready;const imgs={};await Promise.all([...new Set(cats.flatMap(c=>c.items.map(i=>i.img)))].map(async s=>imgs[s]=await loadImg(s)));const logoImg=await loadImg('assets/logo-rancho.svg');const{pg,h}=fit(cats),cv=document.createElement('canvas');cv.width=A4W;cv.height=A4H;const x=cv.getContext('2d'),jp=[];
         for(let i=0;i<pg.length;i++){drawPage(x,pg[i],i,i===pg.length-1,h,imgs,logoImg);jp.push(new Uint8Array(await(await new Promise(r=>cv.toBlob(r,'image/jpeg',.92))).arrayBuffer()))}
-        const a=document.createElement('a');a.href=URL.createObjectURL(mkPdf(jp));a.download=name+'.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}finally{btn.disabled=false;btn.textContent='Descargar PDF'}};
+        await saveBlob(mkPdf(jp),name+'.pdf')}finally{btn.disabled=false;btn.textContent='Descargar PDF'}};
     const banner=document.getElementById('banner'),drop=document.getElementById('drop'),scrim=document.getElementById('scrim'),burger=document.getElementById('burger');
     const setBH=()=>document.documentElement.style.setProperty('--bh',banner.offsetHeight+'px');setBH();addEventListener('resize',setBH);
     function toggleDrop(o){o=o??!drop.classList.contains('open');drop.classList.toggle('open',o);scrim.classList.toggle('open',o);burger.classList.toggle('open',o);burger.setAttribute('aria-expanded',o);burger.setAttribute('aria-label',o?'Cerrar menú':'Abrir menú')}
@@ -142,6 +142,11 @@
     function syncNav(){const v=document.body.classList.contains('pdf-mode');document.querySelectorAll('[data-go=editor],[data-go=view]').forEach(b=>b.classList.toggle('active',(b.dataset.go==='view')===v));window.scrollTo({top:0})}
     ['tabEditor','tabPdf'].forEach(id=>document.getElementById(id).addEventListener('click',syncNav));syncNav();
 
+    /* ===== Guardar archivo: descarga normal en el navegador; en la APK lo guarda en Descargas ===== */
+    const b64=blob=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]||'');r.onerror=no;r.readAsDataURL(blob)});
+    async function saveBlob(blob,name){
+      if(window.RanchoApp){const CH=3*256*1024;for(let o=0;o<blob.size||o===0;o+=CH){const ok=RanchoApp.saveChunk(name,blob.type||'application/octet-stream',await b64(blob.slice(o,o+CH)),o===0,o+CH>=blob.size);if(!ok)throw new Error('save');if(blob.size===0)break}return}
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
     /* ===== Exportar / Importar .zip (sin base de datos) ===== */
     const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return b=>{let c=~0;for(let i=0;i<b.length;i++)c=t[(c^b[i])&255]^(c>>>8);return(~c)>>>0}})();
     function zipStore(files){ // files:[{name,data:Uint8Array}] -> Blob (sin compresión; los JPG ya vienen comprimidos)
@@ -180,8 +185,8 @@
       const manifest={app:'rancho-ruisenor-menu',version:1,exportedAt:new Date().toISOString()};
       const enc=new TextEncoder();
       files.unshift({name:'data.json',data:enc.encode(JSON.stringify({...manifest,data},null,2))});
-      const stamp=new Date().toISOString().slice(0,10),a=document.createElement('a');
-      a.href=URL.createObjectURL(zipStore(files));a.download=`menu-rancho-ruisenor-${stamp}.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);dirty=false}
+      const stamp=new Date().toISOString().slice(0,10);
+      await saveBlob(zipStore(files),`menu-rancho-ruisenor-${stamp}.zip`);dirty=false}
     async function importZip(file){
       const entries=await zipRead(await file.arrayBuffer()),j=entries.get('data.json');if(!j)throw new Error('data.json');
       const doc=JSON.parse(new TextDecoder().decode(j)),d=doc.data||doc;if(!Array.isArray(d.categories))throw new Error('formato');
@@ -201,7 +206,7 @@
     sClr.onclick=()=>{sIn.value='';searchQ='';renderEditor();sIn.focus()};
     sIn.onkeydown=e=>{if(e.key==='Escape')sClr.click()};
     render();
-    if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+    if('serviceWorker' in navigator&&!window.RanchoApp) navigator.serviceWorker.register('sw.js').catch(()=>{});
   </script>
 </body>
 </html>
