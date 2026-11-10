@@ -179,7 +179,7 @@ public class MainActivity extends Activity {
 
         /** Abre el selector de aplicaciones (WhatsApp, Facebook, etc.) para enviar el último archivo guardado. */
         @JavascriptInterface
-        public void shareLast(final String mime, final String title) {
+        public void shareLast(final String mime, final String title, final String target) {
             final Uri u = lastUri;
             if (u == null) return;
             runOnUiThread(new Runnable() {
@@ -190,6 +190,18 @@ public class MainActivity extends Activity {
                         send.putExtra(Intent.EXTRA_STREAM, u);
                         send.putExtra(Intent.EXTRA_SUBJECT, title);
                         send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        if ("whatsapp".equals(target)) {
+                            String[] pkgs = { "com.whatsapp", "com.whatsapp.w4b" };
+                            for (String pkg : pkgs) {
+                                try {
+                                    Intent direct = new Intent(send);
+                                    direct.setPackage(pkg);
+                                    startActivity(direct);
+                                    return;
+                                } catch (Exception notInstalled) { /* prueba el siguiente o el selector */ }
+                            }
+                            Toast.makeText(MainActivity.this, "No se encontró WhatsApp; elige otra aplicación", Toast.LENGTH_LONG).show();
+                        }
                         Intent chooser = Intent.createChooser(send, "Enviar PDF");
                         chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         startActivity(chooser);
