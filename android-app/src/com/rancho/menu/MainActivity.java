@@ -173,7 +173,31 @@ public class MainActivity extends Activity {
     public class Bridge {
         private OutputStream out;
         private Uri uri;
+        private Uri lastUri;
         private String name;
+
+        /** Abre el selector de aplicaciones (WhatsApp, Facebook, etc.) para enviar el último archivo guardado. */
+        @JavascriptInterface
+        public void shareLast(final String mime, final String title) {
+            final Uri u = lastUri;
+            if (u == null) return;
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    try {
+                        Intent send = new Intent(Intent.ACTION_SEND);
+                        send.setType(mime == null || mime.length() == 0 ? "application/pdf" : mime);
+                        send.putExtra(Intent.EXTRA_STREAM, u);
+                        send.putExtra(Intent.EXTRA_SUBJECT, title);
+                        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        Intent chooser = Intent.createChooser(send, "Enviar PDF");
+                        chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(chooser);
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "No se pudo abrir el selector para enviar", Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+        }
 
         @JavascriptInterface
         public synchronized boolean saveChunk(String fileName, String mime, String base64, boolean first, boolean last) {
@@ -198,6 +222,7 @@ public class MainActivity extends Activity {
                     ContentValues v = new ContentValues();
                     v.put("is_pending", 0);
                     cr.update(uri, v, null, null);
+                    lastUri = uri;
                     final String shown = name;
                     runOnUiThread(new Runnable() {
                         public void run() {
