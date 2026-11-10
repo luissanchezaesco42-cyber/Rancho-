@@ -62,6 +62,13 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        // Guarda cualquier cambio pendiente antes de que la app pase a segundo plano o se cierre
+        if (web != null) web.evaluateJavascript("window.__flush&&window.__flush()", null);
+        super.onPause();
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
     }
