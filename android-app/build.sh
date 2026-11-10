@@ -10,7 +10,7 @@ rm -rf build && mkdir -p build/classes build/assets
 cp -r ../menu-app/. build/assets/
 rm -f build/assets/server.mjs build/assets/README.md build/assets/sw.js
 aapt package -f -M AndroidManifest.xml -S res -A build/assets -I "$ANDROID_JAR" \
-  --min-sdk-version 29 --target-sdk-version 34 --version-code 9 --version-name 1.8 -F build/base.apk
+  --min-sdk-version 29 --target-sdk-version 34 --version-code 10 --version-name 1.9 -F build/base.apk
 javac -nowarn -source 8 -target 8 -bootclasspath "$ANDROID_JAR" -d build/classes src/com/rancho/menu/*.java 2> build/javac.log || { cat build/javac.log; exit 1; }
 dalvik-exchange --dex --min-sdk-version=29 --output=build/classes.dex build/classes
 (cd build && aapt add base.apk classes.dex >/dev/null)
