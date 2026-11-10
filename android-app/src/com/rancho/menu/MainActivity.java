@@ -52,6 +52,13 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setSupportMultipleWindows(false);
+        s.setSupportZoom(false);
+        s.setBuiltInZoomControls(false);
+        s.setDisplayZoomControls(false);
+        s.setTextZoom(100);
+        web.setOverScrollMode(android.view.View.OVER_SCROLL_NEVER);
+        web.setVerticalScrollBarEnabled(false);
+        web.setHorizontalScrollBarEnabled(false);
         s.setMediaPlaybackRequiresUserGesture(true);
 
         web.addJavascriptInterface(new Bridge(), "RanchoApp");
@@ -59,6 +66,17 @@ public class MainActivity extends Activity {
         web.setWebChromeClient(new AppChrome());
         if (state == null) web.loadUrl("https://" + HOST + "/index.html");
         else web.restoreState(state);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Cierra ventanas/menús de la app; si no hay nada que cerrar, sale
+        if (web == null) { super.onBackPressed(); return; }
+        web.evaluateJavascript("(window.__back&&window.__back())?'1':'0'", new ValueCallback<String>() {
+            public void onReceiveValue(String v) {
+                if (!"\"1\"".equals(v)) MainActivity.super.onBackPressed();
+            }
+        });
     }
 
     @Override
