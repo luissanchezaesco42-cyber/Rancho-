@@ -1,7 +1,7 @@
 # APK de Rancho Menús
 
 Contenedor Android (WebView) que lleva dentro la misma app de `../menu-app`.
-Sin base de datos: importas tu `.zip` al empezar y exportas otro al terminar.
+Importas tu `.zip` una sola vez: los datos quedan guardados en el teléfono. Exportar sirve como respaldo.
 En la APK, **Exportar** guarda el `.zip` y el PDF en la carpeta **Descargas** del teléfono.
 
 ## Compilar
