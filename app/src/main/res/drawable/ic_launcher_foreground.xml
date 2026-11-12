@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- alas -->
+    <path android:fillColor="#C0392B" android:pathData="M54,60 L20,28 L30,62 Z" />
+    <path android:fillColor="#C0392B" android:pathData="M54,60 L88,28 L78,62 Z" />
+    <!-- cuerpo -->
+    <path android:fillColor="#FF6B35" android:pathData="M54,38 C72,38 80,52 78,66 C76,80 66,88 54,88 C42,88 32,80 30,66 C28,52 36,38 54,38 Z" />
+    <path android:fillColor="#FFD9A8" android:pathData="M54,56 C64,56 68,66 66,74 C64,82 60,84 54,84 C48,84 44,82 42,74 C40,66 44,56 54,56 Z" />
+    <!-- cuernos -->
+    <path android:fillColor="#FFF3C4" android:pathData="M40,40 L34,22 L48,36 Z" />
+    <path android:fillColor="#FFF3C4" android:pathData="M68,40 L74,22 L60,36 Z" />
+    <!-- ojos -->
+    <path android:fillColor="#FFFFFF" android:pathData="M44,48 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M64,48 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+    <path android:fillColor="#222222" android:pathData="M45,49 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+    <path android:fillColor="#222222" android:pathData="M63,49 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+</vector>
