@@ -1,0 +1,3 @@
+import http from 'node:http';import fs from 'node:fs';import path from 'node:path';
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.jpg':'image/jpeg','.png':'image/png','.css':'text/css; charset=utf-8'};
+http.createServer((req,res)=>{const clean=(req.url||'/').split('?')[0];const file=path.join(process.cwd(),clean==='/'?'index.html':clean);fs.readFile(file,(err,data)=>{if(err){res.writeHead(404);return res.end()}res.writeHead(200,{'Content-Type':types[path.extname(file).toLowerCase()]||'application/octet-stream'});res.end(data)})}).listen(4173,'127.0.0.1');
