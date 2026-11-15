@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cotizador</string>
+    <string name="title_activity_main">Cotizador</string>
+    <string name="package_name">com.rancho.cotizador</string>
+    <string name="custom_url_scheme">com.rancho.cotizador</string>
+</resources>

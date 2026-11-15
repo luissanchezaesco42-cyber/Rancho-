@@ -58,7 +58,7 @@ export function buildQuotePdf(quote, company, options = {}) {
   // 2. Cliente
   const c = quote.client || {};
   let y = 36;
-  doc.setLineWidth(0.3).rect(M, y, W - 2 * M, 22);
+  doc.setLineWidth(0.3).rect(M, y, W - 2 * M, 26);
   doc.setFontSize(9);
   const rows = [
     ['Cliente:', c.name], ['NIT/Cédula:', c.nit], ['Ciudad:', c.city], ['Dirección:', c.address], ['Teléfono:', c.phone],
@@ -69,7 +69,7 @@ export function buildQuotePdf(quote, company, options = {}) {
   });
 
   // 3. Fecha / vigencia / pago / vendedor
-  y += 26;
+  y += 30;
   const meta = [
     ['FECHA', formatDate(quote.date)],
     ['VÁLIDA HASTA', formatDate(addDays(quote.date, toNumber(quote.validDays)))],
@@ -99,7 +99,7 @@ export function buildQuotePdf(quote, company, options = {}) {
     headStyles: { fillColor: INK, textColor: 255, fontStyle: 'bold', halign: 'center' },
     columnStyles: {
       0: { halign: 'center', cellWidth: 11 }, 1: { cellWidth: 24 }, 3: { halign: 'center', cellWidth: 12 },
-      4: { halign: 'right', cellWidth: 14 }, 5: { halign: 'right', cellWidth: 25 }, 6: { halign: 'right', cellWidth: 14 },
+      4: { halign: 'right', cellWidth: 14 }, 5: { halign: 'right', cellWidth: 25 }, 6: { halign: 'right', cellWidth: 17 },
       7: { halign: 'right', cellWidth: 26 },
     },
     rowPageBreak: 'avoid',
