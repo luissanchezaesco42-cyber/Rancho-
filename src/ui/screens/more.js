@@ -9,6 +9,6 @@ export function render() {
     soonRow('truck', 'Remisiones'),
     soonRow('receipt', 'Facturas'),
     soonRow('chart', 'Reportes'),
-    h('p', { class: 'muted center' }, 'Cotizador · versión de pruebas'),
+    h('p', { class: 'muted center', 'data-testid': 'build' }, `Cotizador · versión de pruebas · ${typeof __BUILD__ === 'undefined' ? 'desarrollo' : __BUILD__}`),
   );
 }

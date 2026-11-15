@@ -43,7 +43,7 @@ function mount() {
         SIDEBAR.map(([key, label, ic, enabled]) => enabled
           ? link(`#/${key}`, key === activeTab || (key === 'company' && name === 'company') ? 'side-item active' : 'side-item', icon(ic), h('span', {}, label))
           : h('span', { class: 'side-item disabled', 'aria-disabled': 'true', title: 'Próximamente' }, icon(ic), h('span', {}, label), h('em', { class: 'pill' }, 'Pronto'))),
-        brand && h('div', { class: 'side-foot muted' }, brand)),
+        h('div', { class: 'side-foot muted' }, brand, h('div', {}, typeof __BUILD__ === 'undefined' ? 'desarrollo' : __BUILD__))),
       h('div', { class: 'content' },
         h('header', { class: 'appbar' },
           showBack && h('button', { class: 'iconbtn', type: 'button', 'aria-label': 'Atrás', onClick: () => goBack(name) }, icon('back')),
