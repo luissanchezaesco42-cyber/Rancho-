@@ -1,4 +1,4 @@
-import { h, field, formData } from '../dom.js';
+import { h, field, formData, soon, soonField } from '../dom.js';
 import { loadCompany, saveCompany } from '../../lib/store.js';
 
 function readLogo(file) {
@@ -53,6 +53,9 @@ export function render() {
     field('Teléfono', 'phone', c.phone, { inputmode: 'tel' }),
     field('Correo', 'email', c.email, { inputmode: 'email' }),
     field('IVA por defecto (%)', 'defaultIva', c.defaultIva, { inputmode: 'decimal' }),
+    soonField('Prefijo de cotización', 'prefix', 'COT'),
+    soonField('Prefijo de remisión', 'prefixRemision', 'REM'),
+    soonField('Prefijo de factura', 'prefixFactura', 'FAC'),
     h(
       'div',
       { class: 'field' },
@@ -71,6 +74,7 @@ export function render() {
       }),
       h('button', { type: 'button', class: 'btn ghost', onClick: () => { logo = null; paint(); } }, 'Quitar logo'),
     ),
+    h('div', {}, soon('Firma y sello')),
     h('button', { class: 'btn primary', type: 'submit' }, 'Guardar'),
     status,
   );

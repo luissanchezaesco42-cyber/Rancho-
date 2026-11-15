@@ -23,6 +23,16 @@ export function field(label, name, value = '', attrs = {}) {
 
 export function formData(form) {
   const out = {};
-  for (const el of form.elements) if (el.name) out[el.name] = el.value;
+  for (const el of form.elements) if (el.name && !el.disabled) out[el.name] = el.value;
   return out;
+}
+
+/** Botón de una función que todavía no existe: visible pero inhabilitado. */
+export function soon(label, extra = '') {
+  return h('button', { type: 'button', class: `btn ghost soon ${extra}`.trim(), disabled: true, title: 'Próximamente', 'aria-disabled': 'true', 'data-soon': '' }, label);
+}
+
+/** Campo deshabilitado para funciones futuras. */
+export function soonField(label, name, value = '') {
+  return h('label', { class: 'field soon' }, h('span', {}, label, ' ', h('em', { class: 'pill' }, 'Pronto')), h('input', { name, value, disabled: true, title: 'Próximamente' }));
 }

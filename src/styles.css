@@ -28,3 +28,44 @@ input, select, textarea { font: inherit; color: inherit; background: var(--bg); 
   .main { margin-left: 220px; max-width: 900px; padding-bottom: 32px; }
   .grid4 { grid-template-columns: repeat(5, 1fr); }
 }
+
+/* Funciones futuras: visibles pero inhabilitadas */
+.btn[disabled], .soon { opacity: .5; cursor: not-allowed; }
+.soon input { cursor: not-allowed; }
+.pill { font-style: normal; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 6px; border-radius: 999px; background: var(--line); color: var(--muted); margin-left: 4px; }
+.soon-row { border-top: 1px dashed var(--line); padding-top: 8px; }
+.nav-item.disabled { flex: 1; text-align: center; padding: 12px 4px; color: var(--muted); opacity: .5; cursor: not-allowed; font-size: .85rem; font-weight: 600; user-select: none; }
+.nav-item .pill { display: block; margin: 2px auto 0; width: fit-content; }
+
+/* Inicio */
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 8px; }
+.stat { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.stat-value { font-size: 1.35rem; }
+.actions { margin-bottom: 12px; }
+.filters { margin-bottom: 4px; } .filters .search { margin: 0; min-width: 200px; }
+.summary { margin: 6px 0 12px; }
+a { color: var(--accent); }
+
+/* Menú: en celular se desliza, en pantallas anchas va a la izquierda */
+.nav { overflow-x: auto; }
+.nav a, .nav .nav-item { flex: 0 0 auto; min-width: 86px; }
+@media (min-width: 900px) {
+  .nav { overflow-x: visible; }
+  .nav .nav-item { text-align: left; padding: 12px 20px; font-size: 1rem; }
+  .nav-item .pill { display: inline-block; margin: 0 0 0 8px; }
+  .stats { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Ajustes de diseño */
+.item.col { align-items: stretch; }
+.stat .pill { align-self: flex-start; margin-left: 0; }
+.quote-form { display: flex; flex-direction: column; gap: 12px; }
+.quote-form .card { margin-bottom: 0; }
+.items { display: flex; flex-direction: column; gap: 12px; }
+.items .card { margin-bottom: 0; }
+.quote-form > .btn:not(.big) { align-self: flex-start; }
+@media (max-width: 899px) {
+  .nav .pill { display: none; }
+  .nav a, .nav .nav-item { min-width: 80px; }
+}
+.soon-row .btn { min-height: 36px; font-size: .8rem; padding: 6px 10px; }

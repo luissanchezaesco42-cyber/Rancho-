@@ -1,4 +1,4 @@
-import { h, field } from '../dom.js';
+import { h, soon, soonField } from '../dom.js';
 import { calcLine, calcTotals, toNumber } from '../../lib/totals.js';
 import { formatCOP } from '../../lib/format.js';
 import { todayISO } from '../../lib/format.js';
@@ -107,7 +107,9 @@ export function render({ id } = {}) {
       location.hash = '#/quotes';
     },
   },
-    h('h2', {}, existing ? `Editar ${existing.number}` : 'Nueva cotización'),
+    h('div', { class: 'row between wrap' },
+      h('h2', {}, existing ? `Editar ${existing.number}` : 'Nueva cotización'),
+      h('div', { class: 'row wrap' }, soon('Enviar por correo'), soon('Convertir en factura'))),
     h('section', { class: 'card form' }, h('h3', {}, 'Cliente'), clients.length ? clientPicker : null,
       clientField('Nombre o razón social', 'name'), clientField('NIT / Cédula', 'nit'), clientField('Ciudad', 'city'),
       clientField('Dirección', 'address'), clientField('Teléfono', 'phone', { inputmode: 'tel' })),
@@ -115,12 +117,16 @@ export function render({ id } = {}) {
       h('label', { class: 'field' }, h('span', {}, 'Fecha'), h('input', { type: 'date', name: 'date', value: q.date, onInput: (e) => { q.date = e.target.value || todayISO(); } })),
       h('label', { class: 'field' }, h('span', {}, 'Validez (días)'), h('input', { name: 'validDays', inputmode: 'numeric', value: q.validDays, onInput: (e) => { q.validDays = e.target.value; } })),
       h('label', { class: 'field' }, h('span', {}, 'Forma de pago'), h('input', { name: 'paymentTerms', value: q.paymentTerms, onInput: (e) => { q.paymentTerms = e.target.value; } })),
-      h('label', { class: 'field' }, h('span', {}, 'Vendedor'), h('input', { name: 'seller', value: q.seller, onInput: (e) => { q.seller = e.target.value; } }))),
+      h('label', { class: 'field' }, h('span', {}, 'Vendedor'), h('input', { name: 'seller', value: q.seller, onInput: (e) => { q.seller = e.target.value; } })),
+      soonField('Estado', 'status', 'Borrador')),
     h('h3', {}, 'Ítems'),
     itemsBox,
     h('button', { type: 'button', class: 'btn ghost', 'data-action': 'add-item', onClick: () => { q.items.push(emptyItem(company.defaultIva)); paintItems(); paintTotals(); } }, '+ Añadir ítem'),
     h('label', { class: 'field' }, h('span', {}, 'Observaciones'), h('textarea', { name: 'notes', rows: 3, onInput: (e) => { q.notes = e.target.value; } }, q.notes)),
     totalsBox,
+    h('section', { class: 'card form' }, h('h3', {}, 'Retenciones'),
+      soonField('Retención en la fuente', 'retefuente', '0'), soonField('Retención de IVA', 'reteiva', '0'), soonField('Retención de ICA', 'reteica', '0'),
+      h('div', {}, soon('Adjuntar archivo'))),
     h('button', { class: 'btn primary big', type: 'submit' }, 'Guardar cotización'),
   );
   paintItems();
