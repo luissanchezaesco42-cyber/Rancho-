@@ -44,7 +44,6 @@ export function render() {
         status.textContent = 'Datos guardados';
       },
     },
-    h('h2', {}, 'Datos de tu empresa'),
     h('p', { class: 'muted' }, 'Aparecen en el encabezado de cada cotización.'),
     field('Nombre o razón social', 'name', c.name),
     field('NIT', 'nit', c.nit),

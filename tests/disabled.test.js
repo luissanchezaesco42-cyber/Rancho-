@@ -17,7 +17,7 @@ describe('funciones futuras inhabilitadas', () => {
   it('inicio: crear remisión y factura están deshabilitados, cotización no', () => {
     const root = mount(home.render());
     const labels = soonButtons(root).map((b) => b.textContent);
-    expect(labels).toEqual(expect.arrayContaining(['+ Nueva remisión', '+ Nueva factura']));
+    expect(labels).toEqual(expect.arrayContaining(['Nueva remisión', 'Nueva factura']));
     expect(soonButtons(root).every((b) => b.disabled)).toBe(true);
     expect(root.querySelector('a[href="#/quote/new"]')).not.toBeNull();
   });
@@ -26,15 +26,22 @@ describe('funciones futuras inhabilitadas', () => {
     const root = mount(home.render());
     expect(root.textContent).toContain('$ 2.000');
     expect(root.textContent).toContain('COT-0001');
+    expect(root.textContent).toContain('1 cotización ·');
+    mk();
+    expect(mount(home.render()).textContent).toContain('2 cotizaciones ·');
+    expect(document.body.textContent).not.toContain('cotizaciónes');
   });
-  it('lista: convertir y enviar por correo deshabilitados en cada cotización', () => {
+  it('lista: convertir y enviar por correo deshabilitados en la hoja de acciones', () => {
     mk();
     const root = mount(quotes.render());
-    const li = root.querySelector('li.item');
-    const labels = soonButtons(li).map((b) => b.textContent);
-    expect(labels).toEqual(['Convertir en remisión', 'Convertir en factura', 'Enviar por correo']);
-    expect(soonButtons(li).every((b) => b.disabled && b.title === 'Próximamente')).toBe(true);
-    expect(li.querySelector('[data-action="share"]').disabled).toBe(false);
+    root.querySelector('li.qitem button').click();
+    const sheet = document.querySelector('.sheet');
+    const soons = soonButtons(sheet);
+    expect(soons.map((b) => b.dataset.action)).toEqual(['to-remision', 'to-factura', 'email']);
+    expect(soons.every((b) => b.disabled && b.title === 'Próximamente')).toBe(true);
+    expect(sheet.querySelector('[data-action="share"]').disabled).toBe(false);
+    sheet.querySelector('[data-action="to-factura"]').click();
+    expect(document.querySelector('.sheet')).not.toBeNull(); // no hace nada
   });
   it('editor: estado y retenciones deshabilitados y no se guardan', () => {
     const root = mount(editor.render({ id: 'new' }));

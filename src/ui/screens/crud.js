@@ -5,7 +5,7 @@ import { h, field, formData } from '../dom.js';
  * cfg: { title, fields: [{name,label,attrs}], list, save, remove, summary(item), searchText(item), defaults() }
  */
 export function crudScreen(cfg) {
-  const root = h('div');
+  const root = h('div', { class: 'stack' });
   let editing = null;
   let query = '';
 
@@ -47,7 +47,6 @@ export function crudScreen(cfg) {
       ) : h('li', { class: 'muted' }, 'Aún no hay registros.'),
     );
     root.replaceChildren(
-      h('h2', {}, cfg.title),
       form,
       h('input', { class: 'search', type: 'search', placeholder: 'Buscar…', value: query, onInput: (e) => { query = e.target.value; const pos = e.target.selectionStart; draw(); const s = root.querySelector('.search'); s.focus(); s.setSelectionRange(pos, pos); } }),
       list,

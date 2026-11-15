@@ -2,6 +2,7 @@ import { h, soon, soonField } from '../dom.js';
 import { calcLine, calcTotals, toNumber } from '../../lib/totals.js';
 import { formatCOP } from '../../lib/format.js';
 import { todayISO } from '../../lib/format.js';
+import { setGuard } from '../nav.js';
 import { saveQuote, getQuote, listClients, listProducts, loadCompany } from '../../lib/store.js';
 
 const emptyItem = (iva) => ({ ref: '', description: '', unit: 'UND', qty: 1, unitPrice: 0, discountPct: 0, ivaPct: iva });
@@ -19,11 +20,15 @@ export function render({ id } = {}) {
   const clients = listClients();
   const products = listProducts();
 
+  let dirty = false;
+  setGuard(() => !dirty || confirm('¿Descartar los cambios sin guardar?'));
+  const barTotal = h('b', { 'data-t': 'bar-total' });
   const totalsBox = h('div', { class: 'card totals', 'data-testid': 'totals' });
   const itemsBox = h('div', { class: 'items' });
 
   const paintTotals = () => {
     const t = calcTotals(q.items);
+    barTotal.textContent = formatCOP(t.total);
     totalsBox.replaceChildren(
       h('div', { class: 'trow' }, h('span', {}, 'Total bruto'), h('b', { 'data-t': 'gross' }, formatCOP(t.gross))),
       h('div', { class: 'trow' }, h('span', {}, 'Descuento'), h('b', { 'data-t': 'discount' }, formatCOP(t.discount))),
@@ -104,12 +109,13 @@ export function render({ id } = {}) {
         ...it, qty: toNumber(it.qty), unitPrice: toNumber(it.unitPrice), discountPct: Math.min(100, toNumber(it.discountPct)), ivaPct: toNumber(it.ivaPct),
       }));
       saveQuote(q);
+      dirty = false;
+      setGuard(null);
       location.hash = '#/quotes';
     },
   },
-    h('div', { class: 'row between wrap' },
-      h('h2', {}, existing ? `Editar ${existing.number}` : 'Nueva cotización'),
-      h('div', { class: 'row wrap' }, soon('Enviar por correo'), soon('Convertir en factura'))),
+    existing && h('p', { class: 'muted' }, existing.number),
+    h('div', { class: 'row wrap' }, soon('Enviar por correo'), soon('Convertir en factura')),
     h('section', { class: 'card form' }, h('h3', {}, 'Cliente'), clients.length ? clientPicker : null,
       clientField('Nombre o razón social', 'name'), clientField('NIT / Cédula', 'nit'), clientField('Ciudad', 'city'),
       clientField('Dirección', 'address'), clientField('Teléfono', 'phone', { inputmode: 'tel' })),
@@ -127,8 +133,11 @@ export function render({ id } = {}) {
     h('section', { class: 'card form' }, h('h3', {}, 'Retenciones'),
       soonField('Retención en la fuente', 'retefuente', '0'), soonField('Retención de IVA', 'reteiva', '0'), soonField('Retención de ICA', 'reteica', '0'),
       h('div', {}, soon('Adjuntar archivo'))),
-    h('button', { class: 'btn primary big', type: 'submit' }, 'Guardar cotización'),
+    h('div', { class: 'savebar' },
+      h('div', { class: 'savetotal' }, h('span', { class: 'muted' }, 'Total'), barTotal),
+      h('button', { class: 'btn primary', type: 'submit' }, 'Guardar')),
   );
+  form.addEventListener('input', () => { dirty = true; });
   paintItems();
   paintTotals();
   return form;

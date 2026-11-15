@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { matchRoute } from '../src/ui/router.js';
+import { matchRoute, parentHash } from '../src/ui/router.js';
 
 describe('matchRoute', () => {
   it('rutas', () => {
@@ -12,6 +12,15 @@ describe('matchRoute', () => {
     expect(matchRoute('#/clients').name).toBe('clients');
     expect(matchRoute('#/products').name).toBe('products');
     expect(matchRoute('#/company').name).toBe('company');
+    expect(matchRoute('#/more').name).toBe('more');
     expect(matchRoute('#/xyz').name).toBe('home');
+  });
+  it('atrás sube un nivel y en el inicio no hay padre', () => {
+    expect(parentHash('quote')).toBe('#/quotes');
+    expect(parentHash('quotes')).toBe('#/home');
+    expect(parentHash('clients')).toBe('#/home');
+    expect(parentHash('more')).toBe('#/home');
+    expect(parentHash('company')).toBe('#/more');
+    expect(parentHash('home')).toBeNull();
   });
 });

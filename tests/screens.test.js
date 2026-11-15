@@ -85,17 +85,22 @@ describe('historial', () => {
   const mk = (name) => saveQuote({ date: '2026-11-15', validDays: 15, paymentTerms: '', seller: '', notes: '',
     client: { name, nit: '', city: '', address: '', phone: '', email: '' },
     items: [{ ref: '', description: 'x', unit: 'UND', qty: 1, unitPrice: 1000, discountPct: 0, ivaPct: 0 }] });
-  it('lista, busca, duplica y elimina', () => {
+  const act = (name) => document.querySelector(`.sheet [data-action="${name}"]`);
+  it('lista, busca, duplica y elimina desde la hoja de acciones', () => {
     mk('ACME'); mk('GLOBEX');
     const root = mount(quotes.render());
-    expect(root.querySelectorAll('li.item')).toHaveLength(2);
+    expect(root.querySelectorAll('li.qitem')).toHaveLength(2);
     const s = root.querySelector('.search'); s.value = 'globex'; s.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(root.querySelectorAll('li.item')).toHaveLength(1);
+    expect(root.querySelectorAll('li.qitem')).toHaveLength(1);
     s.value = ''; root.querySelector('.search').dispatchEvent(new Event('input', { bubbles: true }));
-    root.querySelector('[data-action="duplicate"]').click();
+    root.querySelector('li.qitem button').click();
+    expect(document.querySelector('.sheet')).not.toBeNull();
+    act('duplicate').click();
+    expect(document.querySelector('.sheet')).toBeNull();
     expect(listQuotes()).toHaveLength(3);
     vi.stubGlobal('confirm', () => true);
-    root.querySelector('[data-action="delete"]').click();
+    root.querySelector('li.qitem button').click();
+    act('delete').click();
     expect(listQuotes()).toHaveLength(2);
   });
 });
