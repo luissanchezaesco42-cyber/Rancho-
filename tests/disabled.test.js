@@ -37,23 +37,23 @@ describe('funciones futuras inhabilitadas', () => {
     root.querySelector('li.qitem button').click();
     const sheet = document.querySelector('.sheet');
     const soons = soonButtons(sheet);
-    expect(soons.map((b) => b.dataset.action)).toEqual(['to-remision', 'to-factura', 'email']);
+    expect(soons.map((b) => b.dataset.action)).toEqual(['to-remision', 'to-factura']);
     expect(soons.every((b) => b.disabled && b.title === 'Próximamente')).toBe(true);
     expect(sheet.querySelector('[data-action="share"]').disabled).toBe(false);
     sheet.querySelector('[data-action="to-factura"]').click();
     expect(document.querySelector('.sheet')).not.toBeNull(); // no hace nada
   });
-  it('editor: estado y retenciones deshabilitados y no se guardan', () => {
+  it('editor: solo conversiones y adjuntos siguen apagados', () => {
     const root = mount(editor.render({ id: 'new' }));
-    for (const n of ['status', 'retefuente', 'reteiva', 'reteica']) expect(root.querySelector(`[name="${n}"]`).disabled).toBe(true);
-    expect(soonButtons(root).length).toBeGreaterThanOrEqual(3);
-    root.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    expect(Object.keys(listQuotes()[0])).not.toContain('retefuente');
+    expect(soonButtons(root).map((b) => b.textContent)).toEqual(['Convertir en remisión', 'Convertir en factura', 'Adjuntar archivo']);
+    expect(soonButtons(root).every((b) => b.disabled)).toBe(true);
+    for (const n of ['status', 'retefuentePct', 'reteivaPct', 'reteicaPct']) expect(root.querySelector(`[name="${n}"]`).disabled).toBe(false);
   });
-  it('empresa: prefijos deshabilitados y no se guardan', () => {
+  it('empresa: prefijos de remisión y factura apagados y no se guardan', () => {
     const root = mount(company.render());
-    expect(root.querySelector('[name="prefix"]').disabled).toBe(true);
+    expect(root.querySelector('[name="prefixRemision"]').disabled).toBe(true);
+    expect(root.querySelector('[name="prefixFactura"]').disabled).toBe(true);
     root.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    expect(loadCompany()).not.toHaveProperty('prefix');
+    expect(loadCompany()).not.toHaveProperty('prefixRemision');
   });
 });

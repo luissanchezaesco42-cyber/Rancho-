@@ -7,5 +7,7 @@ describe('pantalla Más', () => {
     expect(root.querySelector('[data-testid="build"]').textContent).toContain('versión de pruebas');
     expect(root.querySelector('a[href="#/company"]')).not.toBeNull();
     expect(root.querySelectorAll('[data-soon]')).toHaveLength(3);
+    expect(root.querySelector('[data-action="backup"]')).not.toBeNull();
+    expect(root.querySelector('[data-action="restore"]')).not.toBeNull();
   });
 });

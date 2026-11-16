@@ -192,3 +192,16 @@ input::placeholder { color: var(--muted); }
 .card h3 { margin: 0 0 2px; }
 .filters .search { flex-basis: 100%; }
 .side-item .pill { margin-left: auto; }
+
+/* Estados, filtros y accesos */
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; } .chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; min-height: 38px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; }
+.chip:active { transform: scale(.96); } .chip.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.qmeta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.status { font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--muted); }
+.status.s-sent { background: #dbeafe; color: #1d4ed8; } .status.s-approved { background: #dcfce7; color: #15803d; } .status.s-rejected { background: #fee2e2; color: #b91c1c; }
+@media (prefers-color-scheme: dark) { .status.s-sent { background: #172554; color: #93c5fd; } .status.s-approved { background: #052e16; color: #86efac; } .status.s-rejected { background: #450a0a; color: #fca5a5; } }
+.stats.two { grid-template-columns: repeat(2, 1fr); }
+button.row-link { width: 100%; font: inherit; text-align: left; cursor: pointer; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); opacity: 0; }
+.row-link { position: relative; }

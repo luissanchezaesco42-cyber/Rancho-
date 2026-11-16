@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { calcLine, calcTotals, toNumber } from './totals.js';
+import { calcLine, calcQuote, toNumber } from './totals.js';
 import { numberToWords } from './numberToWords.js';
 import { formatCOP, formatDate, addDays, formatNumber } from './format.js';
 
@@ -106,17 +106,21 @@ export function buildQuotePdf(quote, company, options = {}) {
     showHead: 'everyPage',
   });
 
-  // 5. Totales
-  const t = calcTotals(quote.items);
+  // 5. Totales (las retenciones solo aparecen si tienen valor)
+  const t = calcQuote(quote);
   let ty = doc.lastAutoTable.finalY + 6;
-  if (ty > doc.internal.pageSize.getHeight() - 70) {
+  const totalRows = [['TOTAL BRUTO', t.gross], ['DESCUENTO', t.discount], ['VALOR IVA', t.iva]];
+  if (t.retefuente) totalRows.push(['RET. FUENTE', -t.retefuente]);
+  if (t.reteiva) totalRows.push(['RET. IVA', -t.reteiva]);
+  if (t.reteica) totalRows.push(['RET. ICA', -t.reteica]);
+  totalRows.push(['TOTAL A PAGAR', t.total]);
+  if (ty + totalRows.length * 7 + 40 > doc.internal.pageSize.getHeight() - 20) {
     doc.addPage();
     ty = 16;
   }
   const tx = W - M - 70;
-  const totals = [['TOTAL BRUTO', t.gross], ['DESCUENTO', t.discount], ['VALOR IVA', t.iva], ['TOTAL A PAGAR', t.total]];
-  totals.forEach(([k, v], i) => {
-    const last = i === totals.length - 1;
+  totalRows.forEach(([k, v], i) => {
+    const last = i === totalRows.length - 1;
     const yy = ty + i * 7;
     if (last) doc.setFillColor(...INK).rect(tx, yy, 70, 7, 'F');
     else doc.rect(tx, yy, 70, 7);
@@ -126,14 +130,32 @@ export function buildQuotePdf(quote, company, options = {}) {
   });
   doc.setTextColor(...INK);
 
-  // 6. SON + observaciones + pie
-  let sy = ty + 36;
+  // 6. SON + observaciones + firma
+  let sy = ty + totalRows.length * 7 + 8;
   doc.setFont('helvetica', 'bold').setFontSize(9).text('SON:', M, sy);
   doc.setFont('helvetica', 'normal').text(numberToWords(t.total), M + 10, sy, { maxWidth: W - 2 * M - 10 });
   if (quote.notes) {
     sy += 9;
     doc.setFont('helvetica', 'bold').text('OBSERVACIONES:', M, sy);
-    doc.setFont('helvetica', 'normal').text(quote.notes, M, sy + 4.5, { maxWidth: W - 2 * M });
+    const lines = doc.splitTextToSize(quote.notes, W - 2 * M);
+    doc.setFont('helvetica', 'normal').text(lines, M, sy + 4.5);
+    sy += 4.5 * lines.length;
+  }
+  const sfmt = logoFormat(company.signatureDataUrl);
+  if (sfmt) {
+    try {
+      const props = doc.getImageProperties(company.signatureDataUrl);
+      const maxW = 50, maxH = 24;
+      const k = Math.min(maxW / props.width, maxH / props.height);
+      const sw = props.width * k, sh = props.height * k;
+      let fy = sy + 8;
+      if (fy + sh + 8 > doc.internal.pageSize.getHeight() - 14) { doc.addPage(); fy = 20; }
+      doc.addImage(company.signatureDataUrl, sfmt, M, fy, sw, sh);
+      doc.setDrawColor(...LINE).line(M, fy + sh + 1, M + 60, fy + sh + 1);
+      doc.setFont('helvetica', 'normal').setFontSize(7.5).text('FIRMA AUTORIZADA', M, fy + sh + 5);
+    } catch {
+      /* firma inválida: se omite */
+    }
   }
   const pages = doc.getNumberOfPages();
   for (let p = 1; p <= pages; p++) {

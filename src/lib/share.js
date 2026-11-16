@@ -14,20 +14,24 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export async function shareQuotePdf(quote, company) {
-  const doc = buildQuotePdf(quote, company);
-  const name = quotePdfFileName(quote);
+const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+  const fr = new FileReader();
+  fr.onerror = () => reject(fr.error);
+  fr.onload = () => resolve(String(fr.result).split(',')[1]);
+  fr.readAsDataURL(blob);
+});
+
+/** Comparte un archivo: hoja "Compartir" de Android, o de la web, o descarga directa. */
+export async function shareFile(blob, name, { title = name, text = '' } = {}) {
   if (Capacitor.isNativePlatform()) {
-    const data = doc.output('datauristring').split(',')[1];
-    const { uri } = await Filesystem.writeFile({ path: name, data, directory: Directory.Cache });
-    await Share.share({ title: quote.number, text: `Cotización ${quote.number}`, url: uri, dialogTitle: 'Compartir cotización' });
+    const { uri } = await Filesystem.writeFile({ path: name, data: await blobToBase64(blob), directory: Directory.Cache });
+    await Share.share({ title, text, url: uri, dialogTitle: 'Compartir' });
     return;
   }
-  const blob = doc.output('blob');
-  const file = new File([blob], name, { type: 'application/pdf' });
+  const file = new File([blob], name, { type: blob.type });
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: quote.number });
+      await navigator.share({ files: [file], title, text });
       return;
     } catch (e) {
       if (e?.name === 'AbortError') return;
@@ -36,9 +40,26 @@ export async function shareQuotePdf(quote, company) {
   download(blob, name);
 }
 
-export function viewQuotePdf(quote, company) {
+const subjectOf = (quote, company) => `Cotización ${quote.number}${company.name ? ` - ${company.name}` : ''}`;
+
+export function shareQuotePdf(quote, company) {
   const blob = buildQuotePdf(quote, company).output('blob');
-  const url = URL.createObjectURL(blob);
+  return shareFile(blob, quotePdfFileName(quote), { title: subjectOf(quote, company), text: `Adjunto la cotización ${quote.number}.` });
+}
+
+export function viewQuotePdf(quote, company) {
   if (Capacitor.isNativePlatform()) return shareQuotePdf(quote, company);
+  const url = URL.createObjectURL(buildQuotePdf(quote, company).output('blob'));
   window.open(url, '_blank');
 }
+
+/** Correo: en el celular abre "Compartir" con asunto (elige Gmail u otra app); en PC descarga el PDF y abre el correo. */
+export async function emailQuote(quote, company) {
+  if (Capacitor.isNativePlatform()) return shareQuotePdf(quote, company);
+  download(buildQuotePdf(quote, company).output('blob'), quotePdfFileName(quote));
+  const body = `Hola,\n\nAdjunto la cotización ${quote.number}.\n\n${company.name || ''}`;
+  window.location.href = `mailto:${quote.client?.email || ''}?subject=${encodeURIComponent(subjectOf(quote, company))}&body=${encodeURIComponent(body)}`;
+}
+
+export const shareCsv = (text, name) => shareFile(new Blob([text], { type: 'text/csv;charset=utf-8' }), name, { title: name });
+export const shareBackup = (json, name) => shareFile(new Blob([json], { type: 'application/json' }), name, { title: name });

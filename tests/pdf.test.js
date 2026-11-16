@@ -44,3 +44,23 @@ describe('pdf', () => {
     expect(quotePdfFileName(quote([]))).toBe('COT-0001.pdf');
   });
 });
+
+describe('pdf: retenciones y firma', () => {
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  it('muestra las retenciones solo si existen y resta del total', () => {
+    const sin = buildQuotePdf(quote([item(1)]), company, { compress: false }).output();
+    expect(sin).not.toContain('RET. FUENTE');
+    const con = buildQuotePdf({ ...quote([item(1)]), retefuentePct: 2.5, reteicaPct: 1, reteivaPct: 15 }, company, { compress: false }).output();
+    expect(con).toContain('RET. FUENTE');
+    expect(con).toContain('RET. ICA');
+    expect(con).toContain('RET. IVA');
+  });
+  it('con firma genera FIRMA AUTORIZADA y sin firma no', () => {
+    expect(buildQuotePdf(quote([item(1)]), { ...company, signatureDataUrl: png }, { compress: false }).output()).toContain('FIRMA AUTORIZADA');
+    expect(buildQuotePdf(quote([item(1)]), company, { compress: false }).output()).not.toContain('FIRMA AUTORIZADA');
+  });
+  it('observaciones largas y muchas líneas siguen paginando bien', () => {
+    const doc = buildQuotePdf({ ...quote(Array.from({ length: 40 }, (_, i) => item(i + 1))), notes: 'Nota larga. '.repeat(80), retefuentePct: 2.5 }, { ...company, signatureDataUrl: png });
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2);
+  });
+});

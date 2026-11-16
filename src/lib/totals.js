@@ -24,3 +24,18 @@ export function calcTotals(items) {
   }
   return sum;
 }
+
+/**
+ * Totales de una cotización incluyendo retenciones.
+ * Retefuente e ICA se calculan sobre la base (bruto - descuento); ReteIVA sobre el IVA.
+ * total = base + IVA - retenciones.
+ */
+export function calcQuote(quote) {
+  const t = calcTotals(quote.items || []);
+  const base = t.gross - t.discount;
+  const pct = (v) => Math.min(100, toNumber(v));
+  const retefuente = Math.round((base * pct(quote.retefuentePct)) / 100);
+  const reteiva = Math.round((t.iva * pct(quote.reteivaPct)) / 100);
+  const reteica = Math.round((base * pct(quote.reteicaPct)) / 100);
+  return { gross: t.gross, discount: t.discount, base, iva: t.iva, retefuente, reteiva, reteica, total: base + t.iva - retefuente - reteiva - reteica };
+}

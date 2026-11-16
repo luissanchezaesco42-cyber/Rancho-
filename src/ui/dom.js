@@ -50,6 +50,8 @@ const ICONS = {
   receipt: ['M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2z', 'M8 7h8', 'M8 11h8'],
   chart: ['M18 20V10', 'M12 20V4', 'M6 20v-6'],
   chevron: ['M9 18l6-6-6-6'],
+  download: ['M12 3v12', 'M7 10l5 5 5-5', 'M5 21h14'],
+  upload: ['M12 15V3', 'M7 8l5-5 5 5', 'M5 21h14'],
 };
 
 /** Icono SVG en línea (trazos fijos del propio código, sin datos del usuario). */

@@ -1,9 +1,9 @@
-import { h, soon, soonField } from '../dom.js';
-import { calcLine, calcTotals, toNumber } from '../../lib/totals.js';
+import { h, soon } from '../dom.js';
+import { calcLine, calcQuote, toNumber } from '../../lib/totals.js';
 import { formatCOP } from '../../lib/format.js';
 import { todayISO } from '../../lib/format.js';
 import { setGuard } from '../nav.js';
-import { saveQuote, getQuote, listClients, listProducts, loadCompany } from '../../lib/store.js';
+import { saveQuote, getQuote, listClients, listProducts, loadCompany, STATUSES } from '../../lib/store.js';
 
 const emptyItem = (iva) => ({ ref: '', description: '', unit: 'UND', qty: 1, unitPrice: 0, discountPct: 0, ivaPct: iva });
 
@@ -13,7 +13,7 @@ export function render({ id } = {}) {
   const q = existing
     ? structuredClone(existing)
     : {
-        date: todayISO(), validDays: 15, paymentTerms: 'Contado', seller: '', notes: '',
+        date: todayISO(), validDays: 15, paymentTerms: 'Contado', seller: '', notes: '', status: 'draft', retefuentePct: 0, reteivaPct: 0, reteicaPct: 0,
         client: { name: '', nit: '', city: '', address: '', phone: '', email: '' },
         items: [emptyItem(company.defaultIva)],
       };
@@ -27,14 +27,18 @@ export function render({ id } = {}) {
   const itemsBox = h('div', { class: 'items' });
 
   const paintTotals = () => {
-    const t = calcTotals(q.items);
+    const t = calcQuote(q);
     barTotal.textContent = formatCOP(t.total);
-    totalsBox.replaceChildren(
-      h('div', { class: 'trow' }, h('span', {}, 'Total bruto'), h('b', { 'data-t': 'gross' }, formatCOP(t.gross))),
-      h('div', { class: 'trow' }, h('span', {}, 'Descuento'), h('b', { 'data-t': 'discount' }, formatCOP(t.discount))),
-      h('div', { class: 'trow' }, h('span', {}, 'IVA'), h('b', { 'data-t': 'iva' }, formatCOP(t.iva))),
-      h('div', { class: 'trow big' }, h('span', {}, 'Total a pagar'), h('b', { 'data-t': 'total' }, formatCOP(t.total))),
-    );
+    const row = (label, key, value, cls = '') => h('div', { class: `trow ${cls}`.trim() }, h('span', {}, label), h('b', { 'data-t': key }, formatCOP(value)));
+    totalsBox.replaceChildren(...[
+      row('Total bruto', 'gross', t.gross),
+      row('Descuento', 'discount', t.discount),
+      row('IVA', 'iva', t.iva),
+      t.retefuente ? row('Retención en la fuente', 'retefuente', -t.retefuente) : null,
+      t.reteiva ? row('Retención de IVA', 'reteiva', -t.reteiva) : null,
+      t.reteica ? row('Retención de ICA', 'reteica', -t.reteica) : null,
+      row('Total a pagar', 'total', t.total, 'big'),
+    ].filter(Boolean));
   };
 
   const numInput = (item, key, label, extra = {}) =>
@@ -100,11 +104,15 @@ export function render({ id } = {}) {
     h('label', { class: 'field' }, h('span', {}, label),
       h('input', { name: `client_${key}`, 'data-client': key, value: q.client[key] || '', onInput: (e) => { q.client[key] = e.target.value; }, ...attrs }));
 
+  const pctField = (label, key) => h('label', { class: 'field' }, h('span', {}, label),
+    h('input', { name: key, inputmode: 'decimal', value: q[key] || '', placeholder: '0', onInput: (e) => { q[key] = e.target.value; paintTotals(); } }));
+
   const form = h('form', {
     class: 'quote-form',
     onSubmit: (e) => {
       e.preventDefault();
       q.validDays = toNumber(q.validDays);
+      for (const k of ['retefuentePct', 'reteivaPct', 'reteicaPct']) q[k] = Math.min(100, toNumber(q[k]));
       q.items = q.items.map((it) => ({
         ...it, qty: toNumber(it.qty), unitPrice: toNumber(it.unitPrice), discountPct: Math.min(100, toNumber(it.discountPct)), ivaPct: toNumber(it.ivaPct),
       }));
@@ -115,23 +123,28 @@ export function render({ id } = {}) {
     },
   },
     existing && h('p', { class: 'muted' }, existing.number),
-    h('div', { class: 'row wrap' }, soon('Enviar por correo'), soon('Convertir en factura')),
+    h('div', { class: 'row wrap' }, soon('Convertir en remisión'), soon('Convertir en factura')),
     h('section', { class: 'card form' }, h('h3', {}, 'Cliente'), clients.length ? clientPicker : null,
       clientField('Nombre o razón social', 'name'), clientField('NIT / Cédula', 'nit'), clientField('Ciudad', 'city'),
-      clientField('Dirección', 'address'), clientField('Teléfono', 'phone', { inputmode: 'tel' })),
+      clientField('Dirección', 'address'), clientField('Teléfono', 'phone', { inputmode: 'tel' }), clientField('Correo', 'email', { inputmode: 'email', autocapitalize: 'none' })),
     h('section', { class: 'card form' }, h('h3', {}, 'Condiciones'),
       h('label', { class: 'field' }, h('span', {}, 'Fecha'), h('input', { type: 'date', name: 'date', value: q.date, onInput: (e) => { q.date = e.target.value || todayISO(); } })),
       h('label', { class: 'field' }, h('span', {}, 'Validez (días)'), h('input', { name: 'validDays', inputmode: 'numeric', value: q.validDays, onInput: (e) => { q.validDays = e.target.value; } })),
       h('label', { class: 'field' }, h('span', {}, 'Forma de pago'), h('input', { name: 'paymentTerms', value: q.paymentTerms, onInput: (e) => { q.paymentTerms = e.target.value; } })),
       h('label', { class: 'field' }, h('span', {}, 'Vendedor'), h('input', { name: 'seller', value: q.seller, onInput: (e) => { q.seller = e.target.value; } })),
-      soonField('Estado', 'status', 'Borrador')),
+      h('label', { class: 'field' }, h('span', {}, 'Estado'),
+        h('select', { name: 'status', onChange: (e) => { q.status = e.target.value; } },
+          STATUSES.map(([key, label]) => h('option', { value: key, selected: q.status === key ? true : null }, label))))),
     h('h3', {}, 'Ítems'),
     itemsBox,
     h('button', { type: 'button', class: 'btn ghost', 'data-action': 'add-item', onClick: () => { q.items.push(emptyItem(company.defaultIva)); paintItems(); paintTotals(); } }, '+ Añadir ítem'),
     h('label', { class: 'field' }, h('span', {}, 'Observaciones'), h('textarea', { name: 'notes', rows: 3, onInput: (e) => { q.notes = e.target.value; } }, q.notes)),
     totalsBox,
     h('section', { class: 'card form' }, h('h3', {}, 'Retenciones'),
-      soonField('Retención en la fuente', 'retefuente', '0'), soonField('Retención de IVA', 'reteiva', '0'), soonField('Retención de ICA', 'reteica', '0'),
+      h('p', { class: 'muted' }, 'Opcional. Se restan del total a pagar.'),
+      pctField('Retención en la fuente (% de la base)', 'retefuentePct'),
+      pctField('Retención de IVA (% del IVA)', 'reteivaPct'),
+      pctField('Retención de ICA (% de la base)', 'reteicaPct'),
       h('div', {}, soon('Adjuntar archivo'))),
     h('div', { class: 'savebar' },
       h('div', { class: 'savetotal' }, h('span', { class: 'muted' }, 'Total'), barTotal),
