@@ -27,16 +27,6 @@ export function formData(form) {
   return out;
 }
 
-/** Botón de una función que todavía no existe: visible pero inhabilitado. */
-export function soon(label, extra = '') {
-  return h('button', { type: 'button', class: `btn ghost soon ${extra}`.trim(), disabled: true, title: 'Próximamente', 'aria-disabled': 'true', 'data-soon': '' }, label);
-}
-
-/** Campo deshabilitado para funciones futuras. */
-export function soonField(label, name, value = '') {
-  return h('label', { class: 'field soon' }, h('span', {}, label, ' ', h('em', { class: 'pill' }, 'Pronto')), h('input', { name, value, disabled: true, title: 'Próximamente' }));
-}
-
 const ICONS = {
   home: ['M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],
   quotes: ['M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z', 'M14 3v5h5', 'M9 13h6', 'M9 17h6'],
@@ -47,9 +37,10 @@ const ICONS = {
   plus: ['M12 5v14', 'M5 12h14'],
   company: ['M3 21h18', 'M5 21V7l7-4 7 4v14', 'M9 21v-6h6v6'],
   truck: ['M1 3h15v13H1z', 'M16 8h4l3 3v5h-7z', 'M5.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', 'M18.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'],
-  receipt: ['M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2z', 'M8 7h8', 'M8 11h8'],
   chart: ['M18 20V10', 'M12 20V4', 'M6 20v-6'],
   chevron: ['M9 18l6-6-6-6'],
+  clip: ['M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'],
+  x: ['M18 6L6 18', 'M6 6l12 12'],
   download: ['M12 3v12', 'M7 10l5 5 5-5', 'M5 21h14'],
   upload: ['M12 15V3', 'M7 8l5-5 5 5', 'M5 21h14'],
 };

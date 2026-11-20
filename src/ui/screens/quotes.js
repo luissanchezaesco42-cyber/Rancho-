@@ -1,4 +1,4 @@
-import { h, icon, soon } from '../dom.js';
+import { h, icon } from '../dom.js';
 import { listQuotes, duplicateQuote, deleteQuote, setQuoteStatus, loadCompany, STATUSES, statusLabel } from '../../lib/store.js';
 import { calcQuote } from '../../lib/totals.js';
 import { formatCOP, todayISO } from '../../lib/format.js';
@@ -6,7 +6,7 @@ import { quotesToCsv } from '../../lib/csv.js';
 import { shareQuotePdf, viewQuotePdf, emailQuote, shareCsv } from '../../lib/share.js';
 import { openSheet } from '../sheet.js';
 import { navigate } from '../nav.js';
-import { qcard } from './home.js';
+import { qcard } from '../cards.js';
 
 export function render() {
   const root = h('div', { class: 'stack' });
@@ -27,8 +27,7 @@ export function render() {
     { label: 'Duplicar', action: 'duplicate', onClick: () => { duplicateQuote(x.id); draw(); } },
     { label: 'Eliminar', action: 'delete', danger: true, onClick: () => { if (confirm(`¿Eliminar ${x.number}?`)) { deleteQuote(x.id); draw(); } } },
     'divider',
-    { label: 'Convertir en remisión', action: 'to-remision', soon: true },
-    { label: 'Convertir en factura', action: 'to-factura', soon: true },
+    { label: 'Convertir en remisión', action: 'to-remision', onClick: () => navigate(`#/remision/from/${x.id}`) },
   ]);
 
   const draw = () => {

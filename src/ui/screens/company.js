@@ -1,27 +1,6 @@
-import { h, field, formData, soonField } from '../dom.js';
-import { loadCompany, saveCompany, sanitizePrefix, getNextNumber, setNextNumber } from '../../lib/store.js';
-
-/** Lee una imagen y la reduce (máx. 400 px de ancho) conservando la transparencia. */
-function readImage(file) {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onerror = () => reject(fr.error);
-    fr.onload = () => {
-      const img = new Image();
-      img.onerror = () => resolve(fr.result);
-      img.onload = () => {
-        const scale = Math.min(1, 400 / img.width);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/png'));
-      };
-      img.src = fr.result;
-    };
-    fr.readAsDataURL(file);
-  });
-}
+import { h, field, formData } from '../dom.js';
+import { readImage } from '../image.js';
+import { loadCompany, saveCompany, sanitizePrefix, getNextNumber, setNextNumber, getNextRemisionNumber, setNextRemisionNumber } from '../../lib/store.js';
 
 /** Selector de imagen con vista previa. get/set leen y guardan el valor en el estado del formulario. */
 function imagePicker(label, get, set, removeLabel) {
@@ -30,7 +9,7 @@ function imagePicker(label, get, set, removeLabel) {
   paint();
   return h('div', { class: 'field' },
     h('span', {}, label), preview,
-    h('input', { type: 'file', accept: 'image/*', onChange: async (e) => { const f = e.target.files[0]; if (f) { set(await readImage(f)); paint(); } } }),
+    h('input', { type: 'file', accept: 'image/*', onChange: async (e) => { const f = e.target.files[0]; if (f) { try { set(await readImage(f)); paint(); } catch (err) { alert(err.message); } } } }),
     h('button', { type: 'button', class: 'btn ghost', onClick: () => { set(null); paint(); } }, removeLabel));
 }
 
@@ -45,10 +24,18 @@ export function render() {
       class: 'card form',
       onSubmit: (e) => {
         e.preventDefault();
-        const { nextNumber, ...d } = formData(form);
-        saveCompany({ ...c, ...d, quotePrefix: sanitizePrefix(d.quotePrefix), defaultIva: Number(String(d.defaultIva).replace(',', '.')) || 0, logoDataUrl: logo, signatureDataUrl: signature });
-        if (String(nextNumber).trim() !== '') setNextNumber(nextNumber);
-        status.textContent = 'Datos guardados';
+        const { nextNumber, nextRemision, ...d } = formData(form);
+        try {
+          saveCompany({
+            ...c, ...d, quotePrefix: sanitizePrefix(d.quotePrefix), remisionPrefix: sanitizePrefix(d.remisionPrefix, 'REM'),
+            defaultIva: Number(String(d.defaultIva).replace(',', '.')) || 0, logoDataUrl: logo, signatureDataUrl: signature,
+          });
+          if (String(nextNumber).trim() !== '') setNextNumber(nextNumber);
+          if (String(nextRemision).trim() !== '') setNextRemisionNumber(nextRemision);
+          status.textContent = 'Datos guardados';
+        } catch (err) {
+          status.textContent = err.message;
+        }
       },
     },
     h('p', { class: 'muted' }, 'Aparecen en el encabezado de cada cotización.'),
@@ -63,8 +50,8 @@ export function render() {
     field('Prefijo de cotización (hasta 6 letras o números)', 'quotePrefix', c.quotePrefix, { maxlength: 6, autocapitalize: 'characters' }),
     field('Número de la próxima cotización', 'nextNumber', getNextNumber(), { inputmode: 'numeric' }),
     h('p', { class: 'muted' }, 'Cambiar esto no modifica las cotizaciones que ya creaste.'),
-    soonField('Prefijo de remisión', 'prefixRemision', 'REM'),
-    soonField('Prefijo de factura', 'prefixFactura', 'FAC'),
+    field('Prefijo de remisión', 'remisionPrefix', c.remisionPrefix, { maxlength: 6, autocapitalize: 'characters' }),
+    field('Número de la próxima remisión', 'nextRemision', getNextRemisionNumber(), { inputmode: 'numeric' }),
     h('h3', {}, 'Imagen'),
     imagePicker('Logo', () => logo, (v) => { logo = v; }, 'Quitar logo'),
     imagePicker('Firma y sello (sale al pie de la cotización)', () => signature, (v) => { signature = v; }, 'Quitar firma'),

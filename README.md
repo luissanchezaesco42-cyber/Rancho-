@@ -1,6 +1,6 @@
 # Cotizador
 
-App para crear cotizaciones profesionales (celular y PC) con PDF al estilo de una factura comercial. Los datos se guardan en el dispositivo y funciona sin internet.
+App para crear cotizaciones y remisiones profesionales (celular y PC), con PDF, reportes y copia de seguridad. Los datos se guardan en el dispositivo y funciona sin internet.
 
 ## Instalar el APK en Android
 1. En GitHub abre la pestaña **Actions** → la última ejecución de **Compilar APK**.
@@ -19,4 +19,10 @@ npm test        # pruebas
 2. **Clientes / Productos:** opcional, para reutilizarlos.
 3. **Cotizaciones → + Nueva**, y luego **Compartir PDF**.
 
-Las cotizaciones no son facturas electrónicas DIAN.
+## Qué incluye
+- **Cotizaciones:** estados, retenciones, anexos (fotos), exportar a Excel, enviar por correo.
+- **Remisiones:** numeración propia, conversión desde una cotización, PDF con firmas de entrega y recibo.
+- **Reportes:** por periodo, con clientes y productos principales.
+- **Copia de seguridad** de todos los datos.
+
+Las facturas electrónicas no se emiten desde esta app (las hace un proveedor autorizado por la DIAN). Las cotizaciones y remisiones lo indican en el PDF.

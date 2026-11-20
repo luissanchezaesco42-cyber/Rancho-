@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   loadCompany, saveCompany, saveQuote, deleteQuote, listQuotes, duplicateQuote, saveClient, listClients, deleteClient,
   setQuoteStatus, getNextNumber, setNextNumber, exportAll, importAll, sanitizePrefix,
+  saveRemision, listRemisiones, getRemision, setRemisionStatus, duplicateRemision, remisionFromQuote, deleteRemision,
+  getNextRemisionNumber, setNextRemisionNumber,
 } from '../src/lib/store.js';
 import { todayISO } from '../src/lib/format.js';
 
@@ -89,7 +91,7 @@ describe('store', () => {
     const backup = exportAll();
     localStorage.clear();
     expect(listQuotes()).toHaveLength(0);
-    expect(importAll(backup)).toEqual({ quotes: 1, clients: 1, products: 0 });
+    expect(importAll(backup)).toEqual({ quotes: 1, clients: 1, products: 0, remisiones: 0 });
     expect(listQuotes()[0].number).toBe('COT-0001');
     expect(saveQuote(base()).number).toBe('COT-0002');
   });
@@ -98,5 +100,67 @@ describe('store', () => {
     expect(() => importAll('no json')).toThrow('copia de seguridad');
     expect(() => importAll(JSON.stringify({ app: 'otra' }))).toThrow('Cotizador');
     expect(listQuotes()).toHaveLength(1);
+  });
+
+  it('anexos por defecto vacíos en cotizaciones antiguas', () => {
+    localStorage.setItem('cotizador.quotes', JSON.stringify([{ id: 'a', number: 'COT-0001', date: '2026-01-01', items: [] }]));
+    expect(listQuotes()[0].attachments).toEqual([]);
+  });
+  it('sin espacio en el almacenamiento avisa en español', () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('full', 'QuotaExceededError'); });
+    expect(() => saveQuote(base())).toThrow('No hay espacio');
+    spy.mockRestore();
+  });
+});
+
+describe('remisiones', () => {
+  const rem = (o = {}) => ({
+    date: '2026-11-20', client: { name: 'ACME', nit: '1', city: '', address: 'Calle 1', phone: '', email: '' },
+    items: [{ ref: 'A', description: 'Algo', unit: 'UND', qty: 3, unitPrice: 100, discountPct: 0, ivaPct: 19 }], ...o,
+  });
+  it('numera REM-0001, con contador independiente del de cotizaciones', () => {
+    saveQuote(base());
+    expect(saveRemision(rem()).number).toBe('REM-0001');
+    expect(saveRemision(rem()).number).toBe('REM-0002');
+    expect(saveQuote(base()).number).toBe('COT-0002');
+  });
+  it('estado pendiente por defecto y se puede cambiar', () => {
+    const r = saveRemision(rem());
+    expect(r).toMatchObject({ status: 'pending', showPrices: false });
+    expect(setRemisionStatus(r.id, 'delivered').status).toBe('delivered');
+    expect(getRemision(r.id).status).toBe('delivered');
+  });
+  it('no reutiliza números al eliminar y respeta prefijo y próximo número', () => {
+    const r = saveRemision(rem());
+    deleteRemision(r.id);
+    expect(saveRemision(rem()).number).toBe('REM-0002');
+    saveCompany({ ...loadCompany(), remisionPrefix: 'ent' });
+    setNextRemisionNumber(40);
+    expect(getNextRemisionNumber()).toBe(40);
+    expect(saveRemision(rem()).number).toBe('ENT-0040');
+  });
+  it('duplicar da número nuevo, fecha de hoy y vuelve a pendiente', () => {
+    const r = setRemisionStatus(saveRemision(rem()).id, 'delivered');
+    const d = duplicateRemision(r.id);
+    expect(d).toMatchObject({ number: 'REM-0002', status: 'pending', date: todayISO() });
+  });
+  it('desde una cotización copia cliente, ítems y la referencia de origen', () => {
+    const q = saveQuote({ ...base(), seller: 'Osvaldo' });
+    const draft = remisionFromQuote(q.id);
+    expect(draft).toMatchObject({ quoteNumber: 'COT-0001', quoteId: q.id, status: 'pending', showPrices: false, dispatchedBy: 'Osvaldo', deliveryAddress: '' });
+    expect(draft.items).toEqual(q.items);
+    expect(draft.items).not.toBe(q.items);
+    expect(draft.number).toBeUndefined();
+    expect(remisionFromQuote('nada')).toBeNull();
+  });
+  it('se incluyen en la copia de seguridad y las copias antiguas (sin remisiones) siguen funcionando', () => {
+    saveRemision(rem());
+    const backup = exportAll();
+    localStorage.clear();
+    expect(importAll(backup).remisiones).toBe(1);
+    expect(saveRemision(rem()).number).toBe('REM-0002');
+    const old = JSON.stringify({ app: 'cotizador', version: 1, data: { company: {}, clients: [], products: [], quotes: [], counter: 5 } });
+    expect(importAll(old)).toMatchObject({ remisiones: 0, quotes: 0 });
+    expect(listRemisiones()).toEqual([]);
   });
 });

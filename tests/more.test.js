@@ -2,11 +2,10 @@ import { describe, it, expect } from 'vitest';
 import * as more from '../src/ui/screens/more.js';
 
 describe('pantalla Más', () => {
-  it('muestra la compilación y deja Empresa activa y lo demás apagado', () => {
+  it('trae productos, reportes, empresa, copia de seguridad y la compilación', () => {
     const root = more.render();
     expect(root.querySelector('[data-testid="build"]').textContent).toContain('versión de pruebas');
-    expect(root.querySelector('a[href="#/company"]')).not.toBeNull();
-    expect(root.querySelectorAll('[data-soon]')).toHaveLength(3);
+    for (const href of ['#/products', '#/reports', '#/company']) expect(root.querySelector(`a[href="${href}"]`)).not.toBeNull();
     expect(root.querySelector('[data-action="backup"]')).not.toBeNull();
     expect(root.querySelector('[data-action="restore"]')).not.toBeNull();
   });

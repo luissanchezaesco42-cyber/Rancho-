@@ -1,9 +1,10 @@
-import { h, soon } from '../dom.js';
+import { h, icon } from '../dom.js';
+import { readImage } from '../image.js';
 import { calcLine, calcQuote, toNumber } from '../../lib/totals.js';
 import { formatCOP } from '../../lib/format.js';
 import { todayISO } from '../../lib/format.js';
-import { setGuard } from '../nav.js';
-import { saveQuote, getQuote, listClients, listProducts, loadCompany, STATUSES } from '../../lib/store.js';
+import { setGuard, navigate } from '../nav.js';
+import { saveQuote, getQuote, listClients, listProducts, loadCompany, STATUSES, MAX_ATTACHMENTS } from '../../lib/store.js';
 
 const emptyItem = (iva) => ({ ref: '', description: '', unit: 'UND', qty: 1, unitPrice: 0, discountPct: 0, ivaPct: iva });
 
@@ -13,7 +14,7 @@ export function render({ id } = {}) {
   const q = existing
     ? structuredClone(existing)
     : {
-        date: todayISO(), validDays: 15, paymentTerms: 'Contado', seller: '', notes: '', status: 'draft', retefuentePct: 0, reteivaPct: 0, reteicaPct: 0,
+        date: todayISO(), validDays: 15, paymentTerms: 'Contado', seller: '', notes: '', status: 'draft', retefuentePct: 0, reteivaPct: 0, reteicaPct: 0, attachments: [],
         client: { name: '', nit: '', city: '', address: '', phone: '', email: '' },
         items: [emptyItem(company.defaultIva)],
       };
@@ -104,6 +105,34 @@ export function render({ id } = {}) {
     h('label', { class: 'field' }, h('span', {}, label),
       h('input', { name: `client_${key}`, 'data-client': key, value: q.client[key] || '', onInput: (e) => { q.client[key] = e.target.value; }, ...attrs }));
 
+  // Anexos: fotos que salen como páginas al final del PDF
+  q.attachments = q.attachments || [];
+  const attachBox = h('div', { class: 'attach' });
+  const attachInfo = h('p', { class: 'muted', 'data-testid': 'attach-info' });
+  const attachInput = h('input', { type: 'file', accept: 'image/*', class: 'visually-hidden', 'data-action': 'attach',
+    onChange: async (e) => {
+      const f = e.target.files[0];
+      e.target.value = '';
+      if (!f || q.attachments.length >= MAX_ATTACHMENTS) return;
+      try {
+        q.attachments.push({ name: f.name, dataUrl: await readImage(f, { maxWidth: 1280, type: 'image/jpeg', quality: 0.7, background: '#ffffff' }) });
+        dirty = true;
+        paintAttach();
+      } catch (err) {
+        alert(err.message);
+      }
+    } });
+  const attachBtn = h('label', { class: 'btn ghost' }, icon('clip'), 'Adjuntar foto', attachInput);
+  const paintAttach = () => {
+    attachBox.replaceChildren(...q.attachments.map((a, i) => h('div', { class: 'thumb' },
+      h('img', { src: a.dataUrl, alt: a.name }),
+      h('button', { type: 'button', class: 'thumb-x', 'data-action': 'remove-attach', 'aria-label': `Quitar ${a.name}`, onClick: () => { q.attachments.splice(i, 1); dirty = true; paintAttach(); } }, icon('x')))));
+    const full = q.attachments.length >= MAX_ATTACHMENTS;
+    attachInput.disabled = full;
+    attachBtn.classList.toggle('is-disabled', full);
+    attachInfo.textContent = `${q.attachments.length} de ${MAX_ATTACHMENTS} fotos · salen como páginas al final del PDF.`;
+  };
+
   const pctField = (label, key) => h('label', { class: 'field' }, h('span', {}, label),
     h('input', { name: key, inputmode: 'decimal', value: q[key] || '', placeholder: '0', onInput: (e) => { q[key] = e.target.value; paintTotals(); } }));
 
@@ -116,14 +145,19 @@ export function render({ id } = {}) {
       q.items = q.items.map((it) => ({
         ...it, qty: toNumber(it.qty), unitPrice: toNumber(it.unitPrice), discountPct: Math.min(100, toNumber(it.discountPct)), ivaPct: toNumber(it.ivaPct),
       }));
-      saveQuote(q);
+      try {
+        saveQuote(q);
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
       dirty = false;
       setGuard(null);
       location.hash = '#/quotes';
     },
   },
     existing && h('p', { class: 'muted' }, existing.number),
-    h('div', { class: 'row wrap' }, soon('Convertir en remisión'), soon('Convertir en factura')),
+    existing && h('div', { class: 'row wrap' }, h('button', { type: 'button', class: 'btn ghost', 'data-action': 'to-remision', onClick: () => navigate(`#/remision/from/${existing.id}`) }, 'Convertir en remisión')),
     h('section', { class: 'card form' }, h('h3', {}, 'Cliente'), clients.length ? clientPicker : null,
       clientField('Nombre o razón social', 'name'), clientField('NIT / Cédula', 'nit'), clientField('Ciudad', 'city'),
       clientField('Dirección', 'address'), clientField('Teléfono', 'phone', { inputmode: 'tel' }), clientField('Correo', 'email', { inputmode: 'email', autocapitalize: 'none' })),
@@ -144,8 +178,8 @@ export function render({ id } = {}) {
       h('p', { class: 'muted' }, 'Opcional. Se restan del total a pagar.'),
       pctField('Retención en la fuente (% de la base)', 'retefuentePct'),
       pctField('Retención de IVA (% del IVA)', 'reteivaPct'),
-      pctField('Retención de ICA (% de la base)', 'reteicaPct'),
-      h('div', {}, soon('Adjuntar archivo'))),
+      pctField('Retención de ICA (% de la base)', 'reteicaPct')),
+    h('section', { class: 'card form' }, h('h3', {}, 'Anexos'), attachInfo, attachBox, attachBtn),
     h('div', { class: 'savebar' },
       h('div', { class: 'savetotal' }, h('span', { class: 'muted' }, 'Total'), barTotal),
       h('button', { class: 'btn primary', type: 'submit' }, 'Guardar')),
@@ -153,5 +187,6 @@ export function render({ id } = {}) {
   form.addEventListener('input', () => { dirty = true; });
   paintItems();
   paintTotals();
+  paintAttach();
   return form;
 }
