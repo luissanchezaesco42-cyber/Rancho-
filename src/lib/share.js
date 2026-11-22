@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { FileOpener } from '@capacitor-community/file-opener';
 import { buildQuotePdf, quotePdfFileName } from './pdf.js';
 import { buildRemisionPdf, remisionPdfFileName } from './pdfRemision.js';
 
@@ -41,6 +42,23 @@ export async function shareFile(blob, name, { title = name, text = '' } = {}) {
   download(blob, name);
 }
 
+/**
+ * Ver un PDF. En Android se guarda en la caché y se abre con el lector de PDF del teléfono;
+ * en el navegador se abre en una pestaña nueva. (Compartir/enviar es otra acción: shareFile.)
+ */
+export async function viewPdf(blob, name) {
+  if (!Capacitor.isNativePlatform()) {
+    window.open(URL.createObjectURL(blob), '_blank');
+    return;
+  }
+  try {
+    const { uri } = await Filesystem.writeFile({ path: name, data: await blobToBase64(blob), directory: Directory.Cache });
+    await FileOpener.open({ filePath: uri, contentType: 'application/pdf', openWithDefault: true });
+  } catch {
+    alert('No se pudo abrir el PDF. Instala un lector de PDF (por ejemplo Google Drive) o usa «Compartir PDF».');
+  }
+}
+
 const subjectOf = (quote, company) => `Cotización ${quote.number}${company.name ? ` - ${company.name}` : ''}`;
 
 export function shareQuotePdf(quote, company) {
@@ -48,11 +66,7 @@ export function shareQuotePdf(quote, company) {
   return shareFile(blob, quotePdfFileName(quote), { title: subjectOf(quote, company), text: `Adjunto la cotización ${quote.number}.` });
 }
 
-export function viewQuotePdf(quote, company) {
-  if (Capacitor.isNativePlatform()) return shareQuotePdf(quote, company);
-  const url = URL.createObjectURL(buildQuotePdf(quote, company).output('blob'));
-  window.open(url, '_blank');
-}
+export const viewQuotePdf = (quote, company) => viewPdf(buildQuotePdf(quote, company).output('blob'), quotePdfFileName(quote));
 
 export function shareRemisionPdf(remision, company) {
   const blob = buildRemisionPdf(remision, company).output('blob');
@@ -60,11 +74,7 @@ export function shareRemisionPdf(remision, company) {
   return shareFile(blob, remisionPdfFileName(remision), { title: subject, text: `Adjunto la remisión ${remision.number}.` });
 }
 
-export function viewRemisionPdf(remision, company) {
-  if (Capacitor.isNativePlatform()) return shareRemisionPdf(remision, company);
-  const url = URL.createObjectURL(buildRemisionPdf(remision, company).output('blob'));
-  window.open(url, '_blank');
-}
+export const viewRemisionPdf = (remision, company) => viewPdf(buildRemisionPdf(remision, company).output('blob'), remisionPdfFileName(remision));
 
 /** Correo: en el celular abre "Compartir" con asunto (elige Gmail u otra app); en PC descarga el PDF y abre el correo. */
 export async function emailQuote(quote, company) {
